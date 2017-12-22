@@ -5,7 +5,7 @@ package jp.ats.relay;
  */
 public interface Constants {
 
-	String CONFIG_PROPERTIES = "/conf/relay.properties";
+	String CONFIG_PROPERTIES = "conf/relay.properties";
 
-	String DATABASE_PROPERTIES = "/conf/database.properties";
+	String DATABASE_PROPERTIES = "conf/database.properties";
 }

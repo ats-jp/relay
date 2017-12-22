@@ -29,6 +29,10 @@ public abstract class CommandExecutor {
 		return Shell.newInstance(Shell.config().getCommandExecutorClass());
 	}
 
+	public static CommandExecutor getInstance(String className) {
+		return Shell.newInstance(className);
+	}
+
 	/**
 	 * 外部コマンドを実行する
 	 * @param command コマンドとパラメータ

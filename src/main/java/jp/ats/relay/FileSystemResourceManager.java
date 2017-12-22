@@ -17,7 +17,7 @@ public class FileSystemResourceManager implements ResourceManager {
 	@Override
 	public InputStream load(String resourceName) throws IOException {
 		return new BufferedInputStream(
-			Files.newInputStream(homePath.resolve(resourceName.replaceFirst("^/", ""))));
+			Files.newInputStream(resolvePath(resourceName)));
 	}
 
 	@Override
