@@ -26,11 +26,7 @@ public abstract class CommandExecutor {
 	}
 
 	public static CommandExecutor getInstance() {
-		return getInstance(Shell.config());
-	}
-
-	public static CommandExecutor getInstance(Config config) {
-		return Shell.newInstance(config.getCommandExecutorClass());
+		return Shell.newInstance(Shell.config().getCommandExecutorClass());
 	}
 
 	/**

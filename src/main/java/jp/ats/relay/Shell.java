@@ -35,7 +35,7 @@ public class Shell implements Runnable {
 
 	private final Runnable shell;
 
-	private volatile Runnable runnable;
+	private volatile Runnable process;
 
 	public Shell(ShellClient client) {
 		String[] args = argsThreadLocal.get().clone();
@@ -66,8 +66,8 @@ public class Shell implements Runnable {
 		shell.run();
 	}
 
-	public void setRunnable(Runnable runnable) {
-		this.runnable = runnable;
+	public void setRunnable(Runnable process) {
+		this.process = process;
 	}
 
 	/**
@@ -152,7 +152,7 @@ public class Shell implements Runnable {
 			Blendee.execute(t -> {
 				transactionThreadLocal.set(t);
 				try {
-					runnable.run();
+					process.run();
 				} catch (Exception e) {
 					SHELL_LOGGER.error(e.getMessage(), e);
 					logged[0] = true;
@@ -176,7 +176,7 @@ public class Shell implements Runnable {
 
 	private void executeWithoutDatabase() {
 		try {
-			runnable.run();
+			process.run();
 		} catch (Exception e) {
 			handleException(e);
 		}
@@ -197,13 +197,6 @@ public class Shell implements Runnable {
 	public static String[] args() {
 		return argsThreadLocal.get();
 	}
-
-	/**
-	 * @return 環境情報等、設定情報
-	 */
-	public static Config config() {
-		return configThreadLocal.get();
-	};
 
 	public static ResourceManager resourceManager() {
 		return resourceManagerThreadLocal.get();
@@ -238,7 +231,7 @@ public class Shell implements Runnable {
 			for (String to : mailToAddresses) {
 				CommandExecutor.getInstance().execute(
 					new ByteArrayInputStream(mail.build()),
-					Shell.config().getMailSendCommand(),
+					config().getMailSendCommand(),
 					from,
 					to);
 			}
@@ -246,6 +239,13 @@ public class Shell implements Runnable {
 			throw new RuntimeException(e);
 		}
 	}
+
+	/**
+	 * @return 環境情報等、設定情報
+	 */
+	static Config config() {
+		return configThreadLocal.get();
+	};
 
 	private static String buildMessage(Throwable throwable) {
 		ByteArrayOutputStream stream = new ByteArrayOutputStream();
