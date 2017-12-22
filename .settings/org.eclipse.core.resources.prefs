@@ -1,0 +1,14 @@
+eclipse.preferences.version=1
+encoding//conf/relay.properties=UTF-8
+encoding//src/jp/ats/blendee/internal/package-info.java=UTF-8
+encoding//src/jp/ats/blendee/jdbc/package-info.java=UTF-8
+encoding//src/jp/ats/blendee/orm/package-info.java=UTF-8
+encoding//src/jp/ats/blendee/selector/package-info.java=UTF-8
+encoding//src/jp/ats/blendee/sql/package-info.java=UTF-8
+encoding//src/jp/ats/blendee/support/package-info.java=UTF-8
+encoding//src/jp/ats/blendee/util/package-info.java=UTF-8
+encoding//src/main/java=UTF-8
+encoding//src/main/resources=UTF-8
+encoding//src/test/java=UTF-8
+encoding//src/test/resources=UTF-8
+encoding/<project>=UTF-8
