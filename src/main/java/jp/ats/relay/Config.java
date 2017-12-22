@@ -10,7 +10,7 @@ class Config {
 	private final Properties properties;
 
 	Config(ResourceManager manager) {
-		try (InputStream input = manager.load(Constants.RELAY_PROPERTIES)) {
+		try (InputStream input = manager.load(Constants.CONFIG_PROPERTIES)) {
 			properties = new Properties();
 			properties.load(new InputStreamReader(input, "UTF-8"));
 		} catch (IOException e) {
