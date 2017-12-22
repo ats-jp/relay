@@ -4,10 +4,14 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.mail.MessagingException;
@@ -32,6 +36,8 @@ public class Shell implements Runnable {
 	private static final ThreadLocal<ResourceManager> resourceManagerThreadLocal = new ThreadLocal<>();
 
 	private static final ThreadLocal<Config> configThreadLocal = new ThreadLocal<>();
+
+	private static final ThreadLocal<Map<String, Properties>> configMapThreadLocal = ThreadLocal.withInitial(() -> new HashMap<>());
 
 	private final Runnable shell;
 
@@ -98,6 +104,22 @@ public class Shell implements Runnable {
 		} catch (Exception ee) {
 			SHELL_LOGGER.error(ee.getMessage(), ee);
 		}
+	}
+
+	public static Properties config(String resourceName) {
+		Map<String, Properties> map = configMapThreadLocal.get();
+		Properties config = map.get(resourceName);
+		if (config == null) {
+			try (InputStream input = resourceManager().load(resourceName)) {
+				config = new Properties();
+				config.load(new InputStreamReader(input, StandardCharsets.UTF_8));
+				map.put(resourceName, config);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		return config;
 	}
 
 	public static <T> T newInstance(String className) {
