@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.blendee.jdbc.BTransaction;
 
 import jp.ats.relay.ConcurrentExecutor.Disposer;
 
@@ -299,6 +300,24 @@ public abstract class QueueProcess implements ShellClient {
 		return Files.exists(path);
 	}
 
+	private Path invokeProcess(Path path) {
+		if (usesDatabase()) {
+			BTransaction transaction = Shell.transaction();
+			try {
+				Path result = process(path);
+				//一件処理するごとにcommit
+				transaction.commit();
+				return result;
+			} catch (Throwable t) {
+				//エラー発生時はここでロールバック
+				transaction.rollback();
+				throw t;
+			}
+		} else {
+			return process(path);
+		}
+	}
+
 	/**
 	 * workerスレッドが実行
 	 */
@@ -309,7 +328,7 @@ public abstract class QueueProcess implements ShellClient {
 
 		Path moveToNextFile;
 		try {
-			moveToNextFile = process(f);
+			moveToNextFile = invokeProcess(f);
 		} catch (Skip s) {
 			//スキップされた処理対象は、次回も処理対象とするため、ここでは何もしない
 			return;
