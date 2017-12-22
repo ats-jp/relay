@@ -19,7 +19,7 @@ public abstract class CommandExecutor {
 	public static String[] prepareCommand(String... command) {
 		List<String> list = new LinkedList<>();
 		for (String element : command) {
-			list.addAll(Arrays.asList(U.trim(element).split(" +")));
+			list.addAll(Arrays.asList(trim(element).split(" +")));
 		}
 
 		return list.toArray(new String[list.size()]);
@@ -30,7 +30,7 @@ public abstract class CommandExecutor {
 	}
 
 	public static CommandExecutor getInstance(Config config) {
-		return U.getInstance(config.getCommandExecutorClass());
+		return Shell.newInstance(config.getCommandExecutorClass());
 	}
 
 	/**
@@ -78,4 +78,8 @@ public abstract class CommandExecutor {
 		InputStream in,
 		Charset charset)
 		throws InterruptedException;
+
+	private static String trim(String target) {
+		return target == null ? "" : target.trim();
+	}
 }

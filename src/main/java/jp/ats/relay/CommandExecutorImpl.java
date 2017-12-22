@@ -79,7 +79,7 @@ public class CommandExecutorImpl extends CommandExecutor {
 			Thread outThread = skip(outStream, out, charset);
 			Thread errThread = skip(errStream, err, charset);
 
-			if (in != null) U.sendBytes(in, sendStream);
+			if (in != null) sendBytes(in, sendStream);
 
 			sendStream.close();
 
@@ -138,5 +138,24 @@ public class CommandExecutorImpl extends CommandExecutor {
 				throw new RuntimeException(e);
 			}
 		}
+	}
+
+	private static final int BUFFER_SIZE = 1024 * 100;
+
+	/**
+	 * in から読み込めるだけ読み込み、out へ出力します。
+	 * @param in 
+	 * @param out 
+	 * @throws IOException 
+	 */
+	private static void sendBytes(InputStream in, OutputStream out)
+		throws IOException {
+		byte[] b = new byte[BUFFER_SIZE];
+		int readed;
+		while ((readed = in.read(b, 0, BUFFER_SIZE)) > 0) {
+			out.write(b, 0, readed);
+		}
+
+		out.flush();
 	}
 }

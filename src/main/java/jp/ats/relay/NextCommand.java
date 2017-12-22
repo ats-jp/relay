@@ -28,15 +28,6 @@ public interface NextCommand {
 	 * @return 設定に定義された実装クラス
 	 */
 	static NextCommand getInstance() {
-		return U.getInstance(Shell.config().getNextCommandClass());
-	}
-
-	/**
-	 * 設定から実装クラスを特定しインスタンス化する
-	 * @param config 
-	 * @return 設定に定義された実装クラス
-	 */
-	static NextCommand getInstance(Config config) {
-		return U.getInstance(config.getNextCommandClass());
+		return Shell.newInstance(Shell.config().getNextCommandClass());
 	}
 }

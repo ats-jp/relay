@@ -100,6 +100,19 @@ public class Shell implements Runnable {
 		}
 	}
 
+	public static <T> T newInstance(String className) {
+		try {
+			Class<?> clazz = Class.forName(className);
+
+			@SuppressWarnings("unchecked")
+			T instance = (T) clazz.newInstance();
+
+			return instance;
+		} catch (Exception e) {
+			throw new IllegalStateException(e);
+		}
+	}
+
 	private static void preparePid() {
 		RuntimeMXBean rt = ManagementFactory.getRuntimeMXBean();
 		String pid = rt.getName();
