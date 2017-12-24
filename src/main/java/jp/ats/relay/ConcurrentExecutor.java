@@ -1,6 +1,7 @@
 package jp.ats.relay;
 
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,50 +34,47 @@ public class ConcurrentExecutor<T> {
 	 */
 	private static final int WAIT_MILLIS = 500;
 
-	private final RingBuffer<Event<T>> ringBuffer;
+	private final RingBuffer<Event> ringBuffer;
 
 	private final ExecutorService executor;
 
-	private final WorkerPool<Event<T>> workerPool;
+	private final WorkerPool<Event> workerPool;
 
-	private final Object parking;
+	private final Object parking = new Object();
 
 	/**
 	 * @param concurrency 処理worker数
 	 * @param consumer workerが行う処理
 	 * @param threadFactory 任意のThread生成
 	 * @param disposer 例外処理
-	 * @return ConcurrentExecutor
 	 */
-	public static <T> ConcurrentExecutor<T> getInstance(
+	public ConcurrentExecutor(
 		int concurrency,
 		Consumer<T> consumer,
 		ThreadFactory threadFactory,
 		Disposer<T> disposer) {
-		Object parking = new Object();
-		WorkHandler<Event<T>> workHandler = toWorker(consumer, parking);
-		List<WorkHandler<Event<T>>> workers = IntStream.range(0, concurrency).mapToObj(i -> workHandler).collect(Collectors.toList());
-		return new ConcurrentExecutor<>(threadFactory, disposer, workers, parking);
+		this(threadFactory, disposer, IntStream.range(0, concurrency).mapToObj(i -> consumer).collect(Collectors.toList()));
 	}
 
 	/**
 	 * @param threadFactory 任意のThread生成
 	 * @param disposer 例外処理
 	 * @param consumers workerが行う処理
-	 * @return ConcurrentExecutor
 	 */
 	@SafeVarargs
-	public static <T> ConcurrentExecutor<T> getInstance(
+	public ConcurrentExecutor(
 		ThreadFactory threadFactory,
 		Disposer<T> disposer,
 		Consumer<T>... consumers) {
-		Object parking = new Object();
-		List<WorkHandler<Event<T>>> workers = Arrays.asList(consumers).stream().map(consumer -> toWorker(consumer, parking)).collect(Collectors.toList());
-		return new ConcurrentExecutor<>(threadFactory, disposer, workers, parking);
+		this(threadFactory, disposer, Arrays.asList(consumers));
 	}
 
-	private static <T> WorkHandler<Event<T>> toWorker(Consumer<T> consumer, Object parking) {
-		return event -> {
+	private ConcurrentExecutor(
+		ThreadFactory threadFactory,
+		Disposer<T> disposer,
+		List<Consumer<T>> consumers) {
+		List<WorkHandler<Event>> workers = new LinkedList<>();
+		consumers.forEach(consumer -> workers.add(event -> {
 			try {
 				consumer.accept(event.value);
 			} finally {
@@ -84,25 +82,18 @@ public class ConcurrentExecutor<T> {
 					parking.notify();
 				}
 			}
-		};
-	}
+		}));
 
-	private ConcurrentExecutor(
-		ThreadFactory threadFactory,
-		Disposer<T> disposer,
-		List<WorkHandler<Event<T>>> workers,
-		Object parking) {
-		this.parking = parking;
 		ringBuffer = RingBuffer.createSingleProducer(Event::new, BUFFER_SIZE);
 		executor = Executors.newCachedThreadPool(threadFactory);
 
 		@SuppressWarnings("unchecked")
-		WorkHandler<Event<T>>[] workHandlerArray = workers.toArray(new WorkHandler[workers.size()]);
+		WorkHandler<Event>[] workHandlerArray = workers.toArray(new WorkHandler[workers.size()]);
 
-		ExceptionHandler<Event<T>> exceptionHandler = new ExceptionHandler<Event<T>>() {
+		ExceptionHandler<Event> exceptionHandler = new ExceptionHandler<Event>() {
 
 			@Override
-			public void handleEventException(Throwable t, long sequence, Event<T> event) {
+			public void handleEventException(Throwable t, long sequence, Event event) {
 				disposer.onEvent(t, sequence, event.value);
 			}
 
@@ -117,7 +108,7 @@ public class ConcurrentExecutor<T> {
 			}
 		};
 
-		workerPool = new WorkerPool<Event<T>>(ringBuffer, ringBuffer.newBarrier(), exceptionHandler, workHandlerArray);
+		workerPool = new WorkerPool<Event>(ringBuffer, ringBuffer.newBarrier(), exceptionHandler, workHandlerArray);
 
 		ringBuffer.addGatingSequences(workerPool.getWorkerSequences());
 	}
@@ -226,7 +217,7 @@ public class ConcurrentExecutor<T> {
 		}
 	}
 
-	private static class Event<T> {
+	private class Event {
 
 		private T value;
 
