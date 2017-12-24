@@ -97,6 +97,18 @@ public abstract class QueueProcess implements ShellClient {
 	protected abstract String getSpeedFileName();
 
 	@Override
+	public void execute() {
+		throw new UnsupportedOperationException();
+	}
+
+	public static int countQueueDirectory(Path queueDirectory) {
+		//ファイルディスクリプタがオープンのまま溜まるので都度クローズする
+		try (Stream<Path> stream = stream(queueDirectory)) {
+			return (int) stream.count();
+		}
+	}
+
+	@Override
 	public void start() {
 		//ロックして全件処理中に、前処理がファイルを置いた場合に備えてループ
 		while (count() > 0) { //対象ファイルの取得は、ロック解放状態でやらなければならない
@@ -133,52 +145,16 @@ public abstract class QueueProcess implements ShellClient {
 		}
 	}
 
-	private int computeConcurrency(int maxConcurrency) {
-		//処理予定数が設定値より小さい場合は並列処理数を小さくする
-		int willProcess = count();
-		//最低1はあるように
-		willProcess = willProcess == 0 ? 1 : willProcess;
-
-		return willProcess > maxConcurrency ? maxConcurrency : willProcess;
-	}
-
 	//ロック中に行う処理
-	private boolean processWithLock() {
+	protected boolean processWithLock() {
 		preProcessWithLock();
-
-		Disposer<Path> disposer = new Disposer<Path>() {
-
-			@Override
-			public void onEvent(Throwable t, long sequence, Path value) {
-				logger.error("exception occurred on [" + value + "]", t);
-			}
-
-			@Override
-			public void onStart(Throwable t) {
-				logger.error(t.getMessage(), t);
-			};
-
-			@Override
-			public void onShutdown(Throwable t) {
-				logger.error(t.getMessage(), t);
-			};
-		};
 
 		int maxConcurrency = getMaxConcurrency();
 		int concurrency = computeConcurrency(maxConcurrency);
 
 		AtomicLong speedCounter = new AtomicLong(0);
 
-		ConcurrentExecutor<Path> executor = new ConcurrentExecutor<Path>(
-			concurrency,
-			path -> consumePath(path, speedCounter),
-			runnable -> {
-				Shell shell = new Shell(QueueProcess.this);
-				shell.setRunnable(runnable);
-				return new Thread(shell, "t-" + threadCounter.incrementAndGet());
-			},
-			disposer);
-
+		ConcurrentExecutor<Path> executor = createConcurrentExecutor(concurrency, speedCounter);
 		executor.start();
 
 		//計測開始
@@ -236,16 +212,43 @@ public abstract class QueueProcess implements ShellClient {
 		return true;
 	}
 
-	@Override
-	public void execute() {
-		throw new UnsupportedOperationException();
+	protected ConcurrentExecutor<Path> createConcurrentExecutor(int concurrency, AtomicLong speedCounter) {
+		Disposer<Path> disposer = new Disposer<Path>() {
+
+			@Override
+			public void onEvent(Throwable t, long sequence, Path value) {
+				logger.error("exception occurred on [" + value + "]", t);
+			}
+
+			@Override
+			public void onStart(Throwable t) {
+				logger.error(t.getMessage(), t);
+			};
+
+			@Override
+			public void onShutdown(Throwable t) {
+				logger.error(t.getMessage(), t);
+			};
+		};
+
+		return ConcurrentExecutor.getInstance(
+			concurrency,
+			path -> consumePath(path, speedCounter),
+			runnable -> {
+				Shell shell = new Shell(QueueProcess.this);
+				shell.setRunnable(runnable);
+				return new Thread(shell, "t-" + threadCounter.incrementAndGet());
+			},
+			disposer);
 	}
 
-	public static int countQueueDirectory(Path queueDirectory) {
-		//ファイルディスクリプタがオープンのまま溜まるので都度クローズする
-		try (Stream<Path> stream = stream(queueDirectory)) {
-			return (int) stream.count();
-		}
+	private int computeConcurrency(int maxConcurrency) {
+		//処理予定数が設定値より小さい場合は並列処理数を小さくする
+		int willProcess = count();
+		//最低1はあるように
+		willProcess = willProcess == 0 ? 1 : willProcess;
+
+		return willProcess > maxConcurrency ? maxConcurrency : willProcess;
 	}
 
 	private int count() {
