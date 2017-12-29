@@ -231,7 +231,7 @@ public abstract class QueueProcess implements ShellClient {
 			};
 		};
 
-		return ConcurrentExecutor.getInstance(
+		return new ConcurrentExecutor<>(
 			concurrency,
 			path -> consumePath(path, speedCounter),
 			runnable -> {
