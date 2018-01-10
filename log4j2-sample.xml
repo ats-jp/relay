@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration><!-- Eclipse対策：DTDが無いことを警告する問題の回避 -->
+<Configuration status="off">
+	<Appenders>
+		<!-- ファイル出力 -->
+		<RollingRandomAccessFile name="main-log"
+			fileName="/path-to/relay.log" filePattern="/path-to/relay-%d{yyyy-MM-dd}-%i.zip">
+			<PatternLayout charset="UTF-8"
+				pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{PID}, %t] - %msg%n" />
+			<Policies>
+				<!-- ファイルサイズで切り替え -->
+				<SizeBasedTriggeringPolicy size="100MB" />
+				<!-- 日付が変わったときに切り替え -->
+				<TimeBasedTriggeringPolicy />
+			</Policies>
+			<!-- 保管する過去ログの件数 -->
+			<!-- この数値を超えた過去ログは削除される -->
+			<DefaultRolloverStrategy max="100" />
+		</RollingRandomAccessFile>
+
+		<!-- ロック外でのログ（主にエラー、複数プロセスで出力する可能性がある） -->
+		<File name="error-log" fileName="/path-to/error.log"
+			locking="true">
+			<PatternLayout charset="UTF-8"
+				pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{PID}, %t] - %msg%n" />
+		</File>
+	</Appenders>
+	<Loggers>
+		<Root level="INFO">
+			<AppenderRef ref="main-log" />
+		</Root>
+		<Logger name="shell-logger" level="info" additivity="false">
+			<AppenderRef ref="error-log" />
+		</Logger>
+	</Loggers>
+</Configuration>
