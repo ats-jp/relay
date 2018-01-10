@@ -55,7 +55,7 @@ public class Shell implements Runnable {
 			configThreadLocal.set(config);
 			try {
 				if (client.usesDatabase()) {
-					executeWithDatabase(manager, client);
+					executeWithDatabase(manager);
 				} else {
 					executeWithoutDatabase();
 				}
@@ -148,7 +148,7 @@ public class Shell implements Runnable {
 
 	private static Object lock = new Object();
 
-	private void executeWithDatabase(ResourceManager manager, ShellClient client) {
+	private void executeWithDatabase(ResourceManager manager) {
 		//Blendee設定部
 		try {
 			Properties initValues = new Properties();
