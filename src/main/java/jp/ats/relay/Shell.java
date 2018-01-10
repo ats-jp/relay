@@ -87,7 +87,7 @@ public class Shell implements Runnable {
 
 		argsThreadLocal.set(args);
 		resourceManagerThreadLocal.set(manager);
-		configThreadLocal.set(new Config(manager));
+		configThreadLocal.set(new Config());
 
 		try {
 			client.start();

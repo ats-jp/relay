@@ -1,21 +1,17 @@
 package jp.ats.relay;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Properties;
 
 class Config {
 
 	private final Properties properties;
 
-	Config(ResourceManager manager) {
-		try (InputStream input = manager.load(Constants.CONFIG_PROPERTIES)) {
-			properties = new Properties();
-			properties.load(new InputStreamReader(input, "UTF-8"));
-		} catch (IOException e) {
-			throw new IllegalStateException(e);
-		}
+	public Config(Properties properties) {
+		this.properties = properties;
+	}
+
+	public Config() {
+		properties = Shell.config(Constants.CONFIG_PROPERTIES);
 	}
 
 	/**
