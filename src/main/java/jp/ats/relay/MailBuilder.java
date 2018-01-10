@@ -48,7 +48,7 @@ public class MailBuilder {
 	 * @return MailBuilder
 	 */
 	public static MailBuilder getInstance() {
-		return new MailBuilder(new MimeMessage(Session.getInstance(System.getProperties(), null)));
+		return new MailBuilder(new MimeMessage(Session.getDefaultInstance(System.getProperties(), null)));
 	}
 
 	public MailBuilder(MimeMessage message) {
