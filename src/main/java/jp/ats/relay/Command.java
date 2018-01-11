@@ -59,7 +59,7 @@ public class Command {
 	public static void main(String[] args) {
 		ShellClient client;
 		try {
-			client = (ShellClient) Class.forName(args[0]).newInstance();
+			client = (ShellClient) Class.forName(args[0]).getConstructor().newInstance();
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(EXIT_STATUS_FAIL);
