@@ -127,7 +127,7 @@ public class Shell implements Runnable {
 			Class<?> clazz = Class.forName(className);
 
 			@SuppressWarnings("unchecked")
-			T instance = (T) clazz.newInstance();
+			T instance = (T) clazz.getConstructor().newInstance();
 
 			return instance;
 		} catch (Exception e) {
